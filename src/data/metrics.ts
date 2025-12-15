@@ -15,9 +15,7 @@ export const benefitsData = [
   { name: "Air Quality", value: 48259.41, icon: "🌬️", color: "#3b82f6", description: "Reduced mortality and health costs from cleaner air" },
   { name: "Noise Reduction", value: 34207.75, icon: "🔇", color: "#8b5cf6", description: "Amenity and sleep benefits from quieter environments" },
   { name: "Excess Cold", value: 8801.60, icon: "🏠", color: "#f59e0b", description: "Reduced cold-related mortality from better insulation" },
-  { name: "Diet Change", value: 5054.87, icon: "🥗", color: "#ec4899", description: "Health benefits from improved diet" },
-  { name: "Dampness", value: 641.80, icon: "💧", color: "#6366f1", description: "Health benefits from reduced damp housing" },
-  { name: "Excess Heat", value: 0.11, icon: "🌡️", color: "#ef4444", description: "Reduced heat-related mortality" }
+  { name: "Diet Change", value: 5054.87, icon: "🥗", color: "#ec4899", description: "Health benefits from improved diet" }
 ]
 
 // Negative impacts (costs)
@@ -29,7 +27,7 @@ export const costsData = [
 ]
 
 // Total benefits (positive only)
-export const totalPositiveBenefits = 226844.73 // millions GBP
+export const totalPositiveBenefits = 226202.82 // millions GBP
 
 // By damage type
 export const damageTypeData = [
@@ -39,12 +37,9 @@ export const damageTypeData = [
 
 // By damage pathway
 export const damagePathwayData = [
-  { pathway: "Reduced Mortality", value: 181077.24, color: "#10b981" },
-  { pathway: "Amenity", value: 20067.44, color: "#3b82f6" },
-  { pathway: "Sleep Disturbance", value: 14140.31, color: "#8b5cf6" },
-  { pathway: "Society", value: 5119.78, color: "#f59e0b" },
-  { pathway: "QALY", value: 3121.05, color: "#ec4899" },
-  { pathway: "NHS", value: 561.85, color: "#14b8a6" }
+  { pathway: "Air Quality Improvement", value: 181077.24, color: "#10b981" },
+  { pathway: "Noise Pollution Reduction", value: 14140.31, color: "#8b5cf6" },
+  { pathway: "Active Transport", value: 3121.05, color: "#3b82f6" }
 ]
 
 // By nation
@@ -145,30 +140,23 @@ export const healthOutcomes = [
   { 
     name: "Reduced Mortality",
     value: 181077.24,
-    description: "Lives saved through cleaner air and healthier lifestyles",
+    description: "From cleaner air and increased physical activity (active travel), reducing premature deaths and cardiovascular risk",
     icon: "❤️",
     color: "#10b981"
   },
   {
     name: "Sleep Quality",
     value: 14140.31,
-    description: "Benefits from reduced noise pollution",
+    description: "From fewer motor vehicles and low-emission & quieter transport",
     icon: "😴",
     color: "#8b5cf6"
   },
   {
     name: "Quality of Life",
     value: 3121.05,
-    description: "Quality-adjusted life years gained",
+    description: "From cleaner air, increased physical activity, and improved mental & physical health",
     icon: "✨",
     color: "#3b82f6"
-  },
-  {
-    name: "NHS Savings",
-    value: 561.85,
-    description: "Reduced healthcare costs",
-    icon: "🏥",
-    color: "#f59e0b"
   }
 ]
 

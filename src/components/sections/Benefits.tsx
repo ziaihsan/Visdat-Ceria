@@ -88,7 +88,7 @@ function BarChart() {
       .attr("text-anchor", "end")
       .attr("fill", "#9ca3af")
       .attr("font-size", "12px")
-      .text(d => `${d.icon} ${d.name}`)
+      .text(d => d.name)
 
     svg.selectAll(".value")
       .data(benefitsData)
@@ -194,11 +194,11 @@ export function Benefits() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <p className="text-emerald-400 font-medium mb-4">The Numbers Don't Lie</p>
+          <p className="text-emerald-400 font-medium mb-4">The Facts Speak</p>
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            7 Ways Climate Action
+            5 Benefits of Fighting
             <br />
-            <span className="text-gradient">Pays Off</span>
+            <span className="text-gradient">Climate Change</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             Every co-benefit measured across {summaryStats.totalSmallAreas.toLocaleString()} UK small areas

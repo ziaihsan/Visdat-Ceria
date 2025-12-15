@@ -25,7 +25,7 @@ function BubbleChart() {
 
     const bubbleData: BubbleNode[] = damagePathwayData.map(d => ({
       name: d.pathway,
-      value: Math.sqrt(d.value) * 2,
+      value: Math.sqrt(d.value / 1000) * 8, // Better scaling for visibility
       color: d.color
     }))
 
@@ -35,12 +35,12 @@ function BubbleChart() {
       .attr("height", height)
 
     const simulation = d3.forceSimulation<BubbleNode>(bubbleData)
-      .force("x", d3.forceX(width / 2).strength(0.05))
-      .force("y", d3.forceY(height / 2).strength(0.05))
-      .force("collide", d3.forceCollide<BubbleNode>((d) => d.value + 10))
+      .force("x", d3.forceX(width / 2).strength(0.2))
+      .force("y", d3.forceY(height / 2).strength(0.2))
+      .force("collide", d3.forceCollide<BubbleNode>((d) => d.value + 15))
       .stop()
 
-    for (let i = 0; i < 120; i++) simulation.tick()
+    for (let i = 0; i < 200; i++) simulation.tick()
 
     const bubbles = svg.selectAll(".bubble")
       .data(bubbleData)
@@ -122,26 +122,28 @@ export function Health() {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
         >
-          <p className="text-emerald-400 font-medium mb-4">Real Health Outcomes</p>
+          <p className="text-emerald-400 font-medium mb-4">Better Health For All</p>
           <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Healthier Communities.
+            Healthy Planet,
             <br />
-            <span className="text-gradient">Healthier You.</span>
+            <span className="text-gradient">Healthy People.</span>
           </h2>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Climate action delivers £198.3B in health benefits across the UK by 2050.
+            Taking care of our planet means taking care of our health.
+            <br />
+            £198.3B in benefits by 2050.
           </p>
         </motion.div>
 
         <motion.div
-          className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 max-w-4xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
         >
           {healthOutcomes.map((item) => (
             <motion.div key={item.name} variants={cardVariants}>
-              <GlassCard className="h-full hover:border-emerald-500/30 group">
+              <GlassCard className="h-full hover:border-emerald-500/30 group flex flex-col">
                 <motion.div
                   className="text-4xl mb-4"
                   whileHover={{ scale: 1.2, rotate: 10 }}
@@ -152,14 +154,14 @@ export function Health() {
                 <h3 className="text-lg font-bold text-white mb-2 group-hover:text-gradient transition-all">
                   {item.name}
                 </h3>
-                <p className="text-gray-400 mb-4 text-sm">
+                <p className="text-gray-400 mb-6 text-sm flex-grow">
                   {item.description}
                 </p>
                 <div 
-                  className="rounded-xl p-3"
+                  className="rounded-xl p-4 mt-auto text-center"
                   style={{ backgroundColor: `${item.color}15` }}
                 >
-                  <div className="text-2xl font-bold" style={{ color: item.color }}>
+                  <div className="text-3xl font-bold" style={{ color: item.color }}>
                     {formatMillions(item.value)}
                   </div>
                 </div>

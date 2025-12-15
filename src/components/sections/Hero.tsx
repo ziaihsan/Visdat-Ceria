@@ -100,9 +100,9 @@ export function Hero() {
           </motion.p>
           
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight">
-            Your Future
+            Tomorrow Begins
             <br />
-            <span className="text-gradient">Starts Now</span>
+            <span className="text-gradient">Today</span>
           </h1>
           
           <motion.p
@@ -111,7 +111,7 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            What if fighting climate change made your life better?
+            What if helping the planet made your life better too?
           </motion.p>
 
           <motion.div
@@ -121,10 +121,10 @@ export function Hero() {
             transition={{ delay: 0.6, duration: 0.8 }}
           >
             <p className="text-2xl md:text-3xl font-semibold text-white">
-              This isn't about sacrifice.
+              You don't have to give up anything.
             </p>
             <p className="text-lg text-gray-400">
-              It's about cleaner air, healthier bodies, and thriving communities.
+              It's about clean air, better health, and happy communities.
             </p>
           </motion.div>
         </motion.div>
@@ -156,9 +156,7 @@ export function Hero() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
         >
-          <Button variant="apple" size="lg" className="gap-2">
-            Explore the Data
-          </Button>
+          
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}

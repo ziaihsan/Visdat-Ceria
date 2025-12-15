@@ -263,16 +263,16 @@ function RegionalMap() {
         </div>
       `);
 
-      marker.on("mouseover", function () {
-        this.openPopup();
-        this.setStyle({
+      marker.on("mouseover", () => {
+        marker.openPopup();
+        marker.setStyle({
           fillOpacity: 0.9,
           radius: Math.sqrt(region.value) / 45,
         });
       });
 
-      marker.on("mouseout", function () {
-        this.setStyle({
+      marker.on("mouseout", () => {
+        marker.setStyle({
           fillOpacity: 0.7,
           radius: Math.sqrt(region.value) / 50,
         });
@@ -347,13 +347,13 @@ function LocalAuthoritiesMap() {
         </div>
       `);
 
-      marker.on("mouseover", function () {
-        this.openPopup();
-        this.setStyle({ fillOpacity: 1, radius: 18 - index });
+      marker.on("mouseover", () => {
+        marker.openPopup();
+        marker.setStyle({ fillOpacity: 1, radius: 18 - index });
       });
 
-      marker.on("mouseout", function () {
-        this.setStyle({ fillOpacity: 0.8, radius: 15 - index });
+      marker.on("mouseout", () => {
+        marker.setStyle({ fillOpacity: 0.8, radius: 15 - index });
       });
     });
 

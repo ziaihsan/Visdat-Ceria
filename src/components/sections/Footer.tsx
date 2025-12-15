@@ -98,9 +98,9 @@ export function Footer() {
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 1, delay: 0.2 }}
           >
-            <span className="text-gradient">Your Future</span>
+            <span className="text-gradient">The Future</span>
             <br />
-            <span className="text-white">Starts Now</span>
+            <span className="text-white">We Create Together</span>
           </motion.h2>
 
           <motion.p
@@ -109,7 +109,7 @@ export function Footer() {
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            Climate action isn't just about saving the planet — it's about building a healthier, wealthier, and better future for everyone.
+            Climate action means cleaner air, stronger economies, and healthier communities for everyone.
           </motion.p>
 
           <motion.div
@@ -118,19 +118,8 @@ export function Footer() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.6 }}
           >
-            <p className="text-gray-500 text-sm mb-4">Cumulative Benefits Growth</p>
+            <p className="text-gray-500 text-sm mb-4">Benefits Over Time</p>
             <FinalChart />
-          </motion.div>
-
-          <motion.div
-            className="flex flex-col items-center gap-6 mb-16"
-            initial={{ opacity: 0 }}
-            animate={isInView ? { opacity: 1 } : {}}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <Button variant="apple" size="xl" className="text-lg">
-              Explore Full Dataset
-            </Button>
           </motion.div>
 
           <motion.div

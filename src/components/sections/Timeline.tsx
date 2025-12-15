@@ -422,6 +422,10 @@ export function Timeline() {
                 <div className="text-xs text-gray-400">Noise Reduction</div>
               </div>
             </div>
+            
+            <div className="text-center mt-4">
+              <div className="text-xs text-gray-500">Annual benefits for {year}</div>
+            </div>
           </GlassCard>
         </motion.div>
 
@@ -436,8 +440,7 @@ export function Timeline() {
               Immediate Benefits
             </h3>
             <p className="text-gray-400">
-              In 2025, annual benefits total £1.9B, primarily from physical
-              activity. Even early action delivers measurable results.
+              In 2025, annual benefits total £1.9B from combined health, economic, and environmental improvements. Even early action delivers measurable results.
             </p>
           </GlassCard>
           <GlassCard className="hover:border-cyan-500/30">
@@ -445,8 +448,7 @@ export function Timeline() {
               Peak Impact by 2050
             </h3>
             <p className="text-gray-400">
-              By 2050, annual benefits reach £12.3B as air quality improvements
-              and infrastructure investments fully mature.
+              By 2050, annual benefits reach £11.4B as air quality, active transport, and noise reduction benefits fully mature.
             </p>
           </GlassCard>
         </motion.div>

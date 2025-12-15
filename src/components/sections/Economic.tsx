@@ -1,50 +1,83 @@
-import { motion, useInView } from "framer-motion"
-import { useRef, useEffect } from "react"
-import * as d3 from "d3"
-import { GlassCard } from "@/components/ui/card"
-import { economicData, regionalData, topLocalAuthorities, formatMillions, totalPositiveBenefits } from "@/data/metrics"
+import { motion, useInView } from "framer-motion";
+import { useRef, useEffect } from "react";
+import * as d3 from "d3";
+import { GlassCard } from "@/components/ui/card";
+import {
+  economicData,
+  regionalData,
+  topLocalAuthorities,
+  formatMillions,
+  totalPositiveBenefits,
+} from "@/data/metrics";
+
+// Declare Leaflet types
+declare const L: any;
 
 function Treemap() {
-  const chartRef = useRef<HTMLDivElement>(null)
-  const isInView = useInView(chartRef, { once: true, margin: "-100px" })
+  const chartRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(chartRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
-    if (!chartRef.current || !isInView) return
+    if (!chartRef.current || !isInView) return;
 
-    const container = chartRef.current
-    container.innerHTML = ""
+    const container = chartRef.current;
+    container.innerHTML = "";
 
-    const width = container.clientWidth
-    const height = 400
+    // Ensure container has width
+    const width = Math.max(container.clientWidth, 300);
+    const height = window.innerWidth < 768 ? 300 : 400; // Smaller height on mobile
 
-    const svg = d3.select(container)
+    // Create tooltip
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .style("position", "absolute")
+      .style("visibility", "hidden")
+      .style("background-color", "rgba(0, 0, 0, 0.9)")
+      .style("color", "#fff")
+      .style("padding", "12px 16px")
+      .style("border-radius", "12px")
+      .style("font-size", "14px")
+      .style("pointer-events", "none")
+      .style("z-index", "1000")
+      .style("border", "1px solid rgba(16, 185, 129, 0.3)")
+      .style("backdrop-filter", "blur(10px)")
+      .style("max-width", "280px");
+
+    const svg = d3
+      .select(container)
       .append("svg")
-      .attr("width", width)
+      .attr("width", "100%")
       .attr("height", height)
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .style("max-width", "100%")
+      .style("height", "auto");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const root = d3.hierarchy<any>({ children: economicData })
-      .sum(d => d.value || 0)
+    const root = d3
+      .hierarchy<any>({ children: economicData })
+      .sum((d) => d.value || 0);
 
-    d3.treemap()
-      .size([width, height])
-      .padding(6)
-      .round(true)
+    d3.treemap().size([width, height]).padding(6).round(true)(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (root as any)
+      root as any
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const leaves = root.leaves() as any[]
+    const leaves = root.leaves() as any[];
 
-    const cells = svg.selectAll(".cell")
+    const cells = svg
+      .selectAll(".cell")
       .data(leaves)
       .enter()
       .append("g")
       .attr("class", "cell")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .attr("transform", (d: any) => `translate(${d.x0 || 0},${d.y0 || 0})`)
+      .attr("transform", (d: any) => `translate(${d.x0 || 0},${d.y0 || 0})`);
 
-    cells.append("rect")
+    cells
+      .append("rect")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .attr("width", (d: any) => (d.x1 || 0) - (d.x0 || 0))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,135 +86,290 @@ function Treemap() {
       .attr("fill", (d: any) => d.data.color)
       .attr("rx", 16)
       .style("opacity", 0)
+      .style("cursor", "pointer")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on("mouseover", function (event: any, d: any) {
+        d3.select(this).transition().duration(200).style("opacity", 1);
+
+        const percentage = (
+          (d.data.value / totalPositiveBenefits) *
+          100
+        ).toFixed(1);
+        tooltip.style("visibility", "visible").html(`
+          <div>
+            <div style="font-weight: 600; margin-bottom: 6px; color: ${
+              d.data.color
+            }">${d.data.name}</div>
+            <div style="font-weight: 700; font-size: 18px; margin-bottom: 4px;">${formatMillions(
+              d.data.value
+            )}</div>
+            <div style="color: #10b981; font-size: 14px; margin-bottom: 8px;">${percentage}% of total</div>
+            <div style="color: #9ca3af; font-size: 12px; margin-bottom: 6px;">${
+              d.data.description
+            }</div>
+            ${
+              d.data.detail
+                ? `<div style="color: #6b7280; font-size: 11px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">${d.data.detail}</div>`
+                : ""
+            }
+          </div>
+        `);
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on("mousemove", function (event: any) {
+        tooltip
+          .style("top", event.pageY - 10 + "px")
+          .style("left", event.pageX + 10 + "px");
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .on("mouseout", function () {
+        d3.select(this).transition().duration(200).style("opacity", 0.9);
+
+        tooltip.style("visibility", "hidden");
+      })
       .transition()
       .duration(800)
       .delay((_, i) => i * 150)
-      .style("opacity", 0.9)
+      .style("opacity", 0.9);
 
-    cells.append("text")
+    cells
+      .append("text")
       .attr("x", 16)
       .attr("y", 30)
       .attr("fill", "#fff")
-      .attr("font-size", "14px")
+      .attr("font-size", window.innerWidth < 768 ? "11px" : "14px")
       .attr("font-weight", "600")
       .style("opacity", 0)
+      .style("pointer-events", "none")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .text((d: any) => d.data.name)
       .transition()
       .delay((_, i) => 800 + i * 150)
-      .style("opacity", 1)
+      .style("opacity", 1);
 
-    cells.append("text")
+    cells
+      .append("text")
       .attr("x", 16)
-      .attr("y", 58)
+      .attr("y", window.innerWidth < 768 ? 50 : 58)
       .attr("fill", "#fff")
-      .attr("font-size", "28px")
+      .attr("font-size", window.innerWidth < 768 ? "20px" : "28px")
       .attr("font-weight", "700")
       .style("opacity", 0)
+      .style("pointer-events", "none")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .text((d: any) => formatMillions(d.data.value))
       .transition()
       .delay((_, i) => 900 + i * 150)
-      .style("opacity", 1)
+      .style("opacity", 1);
 
-    cells.append("text")
+    cells
+      .append("text")
       .attr("x", 16)
-      .attr("y", 80)
+      .attr("y", window.innerWidth < 768 ? 68 : 80)
       .attr("fill", "#fff")
-      .attr("font-size", "11px")
+      .attr("font-size", window.innerWidth < 768 ? "9px" : "11px")
       .style("opacity", 0)
+      .style("pointer-events", "none")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .text((d: any) => d.data.description)
+      .each(function (d: any) {
+        // Wrap text on mobile to prevent overflow
+        if (window.innerWidth < 768) {
+          const text = d3.select(this);
+          const words = d.data.description.split(/\s+/);
+          const maxWidth = d.x1 - d.x0 - 32; // Leave padding
+
+          if (words.length > 5) {
+            text.text(words.slice(0, 5).join(" ") + "...");
+          }
+        }
+      })
       .transition()
       .delay((_, i) => 1000 + i * 150)
-      .style("opacity", 0.7)
+      .style("opacity", 0.7);
 
-  }, [isInView])
+    // Cleanup on unmount
+    return () => {
+      tooltip.remove();
+    };
+  }, [isInView]);
 
-  return <div ref={chartRef} className="w-full" />
+  return (
+    <div
+      ref={chartRef}
+      className="w-full overflow-hidden"
+      style={{ maxWidth: "100%" }}
+    />
+  );
 }
 
-function RegionalBarChart() {
-  const chartRef = useRef<HTMLDivElement>(null)
-  const isInView = useInView(chartRef, { once: true, margin: "-100px" })
+function RegionalMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(mapRef, { once: true, margin: "-100px" });
 
   useEffect(() => {
-    if (!chartRef.current || !isInView) return
+    if (!mapRef.current || !isInView || typeof L === "undefined") return;
 
-    const container = chartRef.current
-    container.innerHTML = ""
+    const container = mapRef.current;
+    container.innerHTML = "";
+    container.style.height = "450px";
 
-    const margin = { top: 20, right: 80, bottom: 20, left: 120 }
-    const width = container.clientWidth - margin.left - margin.right
-    const height = 150
+    // Create map centered on UK
+    const map = L.map(container).setView([54.5, -3.5], 5);
 
-    const svg = d3.select(container)
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`)
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
 
-    const x = d3.scaleLinear()
-      .domain([0, d3.max(regionalData, d => d.value)!])
-      .range([0, width])
+    // Add markers for each region
+    regionalData.forEach((region) => {
+      const percentage = ((region.value / totalPositiveBenefits) * 100).toFixed(
+        1
+      );
+      const perCapita = (region.value / (region.population / 1000000)).toFixed(
+        1
+      );
 
-    const y = d3.scaleBand()
-      .domain(regionalData.map(d => d.region))
-      .range([0, height])
-      .padding(0.4)
+      const marker = L.circleMarker([region.lat, region.lng], {
+        radius: Math.sqrt(region.value) / 50,
+        fillColor: region.color,
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.7,
+      }).addTo(map);
 
-    svg.selectAll(".bar")
-      .data(regionalData)
-      .enter()
-      .append("rect")
-      .attr("x", 0)
-      .attr("y", d => y(d.region)!)
-      .attr("height", y.bandwidth())
-      .attr("fill", d => d.color)
-      .attr("rx", y.bandwidth() / 2)
-      .attr("width", 0)
-      .transition()
-      .duration(1000)
-      .delay((_, i) => i * 150)
-      .attr("width", d => x(d.value))
+      marker.bindPopup(`
+        <div style="font-family: sans-serif; min-width: 200px;">
+          <h3 style="color: ${
+            region.color
+          }; font-weight: 700; font-size: 16px; margin-bottom: 8px;">${
+        region.region
+      }</h3>
+          <p style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${formatMillions(
+            region.value
+          )}</p>
+          <p style="color: #10b981; font-size: 14px; margin-bottom: 8px;">${percentage}% of total benefits</p>
+          <p style="color: #666; font-size: 12px; margin-bottom: 4px;">Population: ${(
+            region.population / 1000000
+          ).toFixed(1)}M</p>
+          <p style="color: #666; font-size: 12px; margin-bottom: 8px;">Per Capita: £${perCapita}M</p>
+          <p style="color: #888; font-size: 11px; font-style: italic;">${
+            region.description
+          }</p>
+        </div>
+      `);
 
-    svg.selectAll(".label")
-      .data(regionalData)
-      .enter()
-      .append("text")
-      .attr("x", -10)
-      .attr("y", d => y(d.region)! + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "end")
-      .attr("fill", "#9ca3af")
-      .attr("font-size", "12px")
-      .text(d => d.region)
+      marker.on("mouseover", function () {
+        this.openPopup();
+        this.setStyle({
+          fillOpacity: 0.9,
+          radius: Math.sqrt(region.value) / 45,
+        });
+      });
 
-    svg.selectAll(".value")
-      .data(regionalData)
-      .enter()
-      .append("text")
-      .attr("x", d => x(d.value) + 8)
-      .attr("y", d => y(d.region)! + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("fill", "#fff")
-      .attr("font-size", "12px")
-      .attr("font-weight", "600")
-      .style("opacity", 0)
-      .text(d => formatMillions(d.value))
-      .transition()
-      .delay((_, i) => 1000 + i * 150)
-      .style("opacity", 1)
+      marker.on("mouseout", function () {
+        this.setStyle({
+          fillOpacity: 0.7,
+          radius: Math.sqrt(region.value) / 50,
+        });
+      });
+    });
 
-  }, [isInView])
+    return () => {
+      map.remove();
+    };
+  }, [isInView]);
 
-  return <div ref={chartRef} className="w-full" />
+  return (
+    <div ref={mapRef} style={{ borderRadius: "12px", overflow: "hidden" }} />
+  );
+}
+
+function LocalAuthoritiesMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(mapRef, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (!mapRef.current || !isInView || typeof L === "undefined") return;
+
+    const container = mapRef.current;
+    container.innerHTML = "";
+    container.style.height = "450px";
+
+    // Create map centered on UK
+    const map = L.map(container).setView([54.0, -2.5], 6);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    // Color scale from light to dark green
+    const colorScale = d3
+      .scaleSequential(d3.interpolateGreens)
+      .domain([
+        topLocalAuthorities[topLocalAuthorities.length - 1].value,
+        topLocalAuthorities[0].value,
+      ]);
+
+    // Add markers for top local authorities
+    topLocalAuthorities.forEach((la, index) => {
+      const perCapita = (la.value / (la.population / 1000000)).toFixed(1);
+      const markerColor = colorScale(la.value);
+
+      const marker = L.circleMarker([la.lat, la.lng], {
+        radius: 15 - index,
+        fillColor: markerColor,
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8,
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div style="font-family: sans-serif; min-width: 200px;">
+          <h3 style="color: ${markerColor}; font-weight: 700; font-size: 16px; margin-bottom: 8px;">#${
+        index + 1
+      } ${la.name}</h3>
+          <p style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${formatMillions(
+            la.value
+          )}</p>
+          <p style="color: #666; font-size: 12px; margin-bottom: 4px;">Population: ${(
+            la.population / 1000
+          ).toFixed(0)}K</p>
+          <p style="color: #10b981; font-size: 14px;">Per Capita: £${perCapita}M</p>
+        </div>
+      `);
+
+      marker.on("mouseover", function () {
+        this.openPopup();
+        this.setStyle({ fillOpacity: 1, radius: 18 - index });
+      });
+
+      marker.on("mouseout", function () {
+        this.setStyle({ fillOpacity: 0.8, radius: 15 - index });
+      });
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, [isInView]);
+
+  return (
+    <div ref={mapRef} style={{ borderRadius: "12px", overflow: "hidden" }} />
+  );
 }
 
 export function Economic() {
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
     <section className="py-32 bg-black" ref={ref}>
@@ -207,10 +395,12 @@ export function Economic() {
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mb-12"
+          className="mb-12 overflow-hidden"
         >
-          <GlassCard className="p-8">
-            <h3 className="text-lg font-semibold text-white mb-6">Economic Benefits Breakdown</h3>
+          <GlassCard className="p-4 md:p-8 overflow-hidden">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-4 md:mb-6">
+              Economic Benefits Breakdown
+            </h3>
             <Treemap />
           </GlassCard>
         </motion.div>
@@ -222,8 +412,13 @@ export function Economic() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <GlassCard className="p-6 h-full">
-              <h3 className="text-lg font-semibold text-white mb-4">By Nation</h3>
-              <RegionalBarChart />
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Distribution by Nation
+              </h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Hover over markers to see detailed information
+              </p>
+              <RegionalMap />
             </GlassCard>
           </motion.div>
 
@@ -233,15 +428,13 @@ export function Economic() {
             transition={{ duration: 0.8, delay: 0.5 }}
           >
             <GlassCard className="p-6 h-full">
-              <h3 className="text-lg font-semibold text-white mb-4">Top Local Authorities</h3>
-              <div className="space-y-3">
-                {topLocalAuthorities.slice(0, 5).map((la, i) => (
-                  <div key={la.name} className="flex justify-between items-center">
-                    <span className="text-gray-400 text-sm">{i + 1}. {la.name}</span>
-                    <span className="text-emerald-400 font-semibold">{formatMillions(la.value)}</span>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-lg font-semibold text-white mb-4">
+                Top 10 Local Authorities
+              </h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Interactive map showing highest benefit areas
+              </p>
+              <LocalAuthoritiesMap />
             </GlassCard>
           </motion.div>
         </div>
@@ -254,7 +447,9 @@ export function Economic() {
         >
           <div className="inline-block rounded-[2rem] bg-gradient-to-r from-emerald-500 to-cyan-500 p-[2px]">
             <div className="rounded-[calc(2rem-2px)] bg-black px-16 py-10">
-              <p className="text-gray-400 text-sm mb-2">Total Economic Benefits</p>
+              <p className="text-gray-400 text-sm mb-2">
+                Total Economic Benefits
+              </p>
               <div className="text-5xl md:text-7xl font-bold text-gradient">
                 {formatMillions(totalPositiveBenefits)}
               </div>
@@ -264,5 +459,5 @@ export function Economic() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

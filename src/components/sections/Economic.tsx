@@ -11,7 +11,33 @@ import {
 } from "@/data/metrics";
 
 // Declare Leaflet types
-declare const L: any;
+interface LeafletMap {
+  remove: () => void;
+  invalidateSize: () => void;
+  setView: (coords: [number, number], zoom: number) => LeafletMap;
+}
+
+interface LeafletMarker {
+  addTo: (map: LeafletMap) => LeafletMarker;
+  bindPopup: (content: string) => LeafletMarker;
+  openPopup: () => void;
+  setStyle: (style: Record<string, unknown>) => LeafletMarker;
+  on: (event: string, handler: () => void) => LeafletMarker;
+}
+
+interface LeafletStatic {
+  map: (element: HTMLElement) => LeafletMap;
+  tileLayer: (
+    url: string,
+    options: Record<string, unknown>
+  ) => { addTo: (map: LeafletMap) => void };
+  circleMarker: (
+    coords: [number, number],
+    options: Record<string, unknown>
+  ) => LeafletMarker;
+}
+
+declare const L: LeafletStatic;
 
 function Treemap() {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -56,18 +82,34 @@ function Treemap() {
         .style("max-width", "100%")
         .style("height", "auto");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      interface TreemapNode {
+        value?: number;
+        children?: TreemapNode[];
+      }
+
       const root = d3
-        .hierarchy<any>({ children: economicData })
+        .hierarchy<TreemapNode>({ children: economicData as TreemapNode[] })
         .sum((d) => d.value || 0);
 
-      d3.treemap().size([width, height]).padding(6).round(true)(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        root as any
+      d3.treemap<TreemapNode>().size([width, height]).padding(6).round(true)(
+        root
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const leaves = root.leaves() as any[];
+      interface LeafNode extends d3.HierarchyRectangularNode<TreemapNode> {
+        x0: number;
+        y0: number;
+        x1: number;
+        y1: number;
+        data: {
+          name: string;
+          value: number;
+          color: string;
+          description: string;
+          detail?: string;
+        };
+      }
+
+      const leaves = root.leaves() as LeafNode[];
 
       const cells = svg
         .selectAll(".cell")
@@ -75,22 +117,17 @@ function Treemap() {
         .enter()
         .append("g")
         .attr("class", "cell")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("transform", (d: any) => `translate(${d.x0 || 0},${d.y0 || 0})`);
+        .attr("transform", (d) => `translate(${d.x0 || 0},${d.y0 || 0})`);
 
       cells
         .append("rect")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("width", (d: any) => (d.x1 || 0) - (d.x0 || 0))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("height", (d: any) => (d.y1 || 0) - (d.y0 || 0))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("fill", (d: any) => d.data.color)
+        .attr("width", (d) => (d.x1 || 0) - (d.x0 || 0))
+        .attr("height", (d) => (d.y1 || 0) - (d.y0 || 0))
+        .attr("fill", (d) => d.data.color)
         .attr("rx", 16)
         .style("opacity", 0)
         .style("cursor", "pointer")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .on("mouseover", function (event: any, d: any) {
+        .on("mouseover", function (event: MouseEvent, d: LeafNode) {
           d3.select(this).transition().duration(200).style("opacity", 1);
 
           const percentage = (
@@ -117,13 +154,11 @@ function Treemap() {
           </div>
         `);
         })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .on("mousemove", function (event: any) {
+        .on("mousemove", function (event: MouseEvent) {
           tooltip
             .style("top", event.pageY - 10 + "px")
             .style("left", event.pageX + 10 + "px");
         })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .on("mouseout", function () {
           d3.select(this).transition().duration(200).style("opacity", 0.9);
 
@@ -143,8 +178,7 @@ function Treemap() {
         .attr("font-weight", "600")
         .style("opacity", 0)
         .style("pointer-events", "none")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .text((d: any) => d.data.name)
+        .text((d) => d.data.name)
         .transition()
         .delay((_, i) => 800 + i * 150)
         .style("opacity", 1);
@@ -158,8 +192,7 @@ function Treemap() {
         .attr("font-weight", "700")
         .style("opacity", 0)
         .style("pointer-events", "none")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .text((d: any) => formatMillions(d.data.value))
+        .text((d) => formatMillions(d.data.value))
         .transition()
         .delay((_, i) => 900 + i * 150)
         .style("opacity", 1);
@@ -172,14 +205,12 @@ function Treemap() {
         .attr("font-size", window.innerWidth < 768 ? "9px" : "11px")
         .style("opacity", 0)
         .style("pointer-events", "none")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .text((d: any) => d.data.description)
-        .each(function (d: any) {
+        .text((d) => d.data.description)
+        .each(function (d: LeafNode) {
           // Wrap text on mobile to prevent overflow
           if (window.innerWidth < 768) {
             const text = d3.select(this);
             const words = d.data.description.split(/\s+/);
-            const maxWidth = d.x1 - d.x0 - 32; // Leave padding
 
             if (words.length > 5) {
               text.text(words.slice(0, 5).join(" ") + "...");

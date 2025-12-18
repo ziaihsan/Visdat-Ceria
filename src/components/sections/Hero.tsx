@@ -1,89 +1,128 @@
-import { motion } from "framer-motion"
-import { useEffect, useRef } from "react"
-import * as d3 from "d3"
-import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
-import { summaryStats, formatMillions, totalPositiveBenefits } from "@/data/metrics"
+import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
+import * as d3 from "d3";
+import { ChevronDown } from "lucide-react";
+import {
+  summaryStats,
+  formatMillions,
+  totalPositiveBenefits,
+} from "@/data/metrics";
 
 interface Particle {
-  x: number
-  y: number
-  r: number
-  vx: number
-  vy: number
-  opacity: number
+  x: number;
+  y: number;
+  r: number;
+  vx: number;
+  vy: number;
+  opacity: number;
 }
 
 export function Hero() {
-  const canvasRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current) return;
 
-    const width = window.innerWidth
-    const height = window.innerHeight
+    function drawParticles() {
+      const container = canvasRef.current;
+      if (!container) return;
+      container.innerHTML = "";
 
-    const svg = d3.select(canvasRef.current)
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .style("position", "absolute")
-      .style("top", "0")
-      .style("left", "0")
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-    const particles: Particle[] = d3.range(60).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: Math.random() * 3 + 1,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      opacity: Math.random() * 0.3 + 0.1
-    }))
+      const svg = d3
+        .select(container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .style("position", "absolute")
+        .style("top", "0")
+        .style("left", "0");
 
-    const gradient = svg.append("defs")
-      .append("radialGradient")
-      .attr("id", "particleGradient")
+      const particles: Particle[] = d3.range(60).map(() => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 3 + 1,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        opacity: Math.random() * 0.3 + 0.1,
+      }));
 
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#10b981")
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", "#3b82f6")
+      const gradient = svg
+        .append("defs")
+        .append("radialGradient")
+        .attr("id", "particleGradient");
 
-    const circles = svg.selectAll<SVGCircleElement, Particle>("circle")
-      .data(particles)
-      .enter()
-      .append("circle")
-      .attr("cx", d => d.x)
-      .attr("cy", d => d.y)
-      .attr("r", d => d.r)
-      .attr("fill", "url(#particleGradient)")
-      .attr("opacity", d => d.opacity)
+      gradient
+        .append("stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#10b981");
+      gradient
+        .append("stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#3b82f6");
 
-    function animate() {
-      particles.forEach(p => {
-        p.x += p.vx
-        p.y += p.vy
-        if (p.x < 0 || p.x > width) p.vx *= -1
-        if (p.y < 0 || p.y > height) p.vy *= -1
-      })
-      circles.attr("cx", d => d.x).attr("cy", d => d.y)
-      requestAnimationFrame(animate)
+      const circles = svg
+        .selectAll<SVGCircleElement, Particle>("circle")
+        .data(particles)
+        .enter()
+        .append("circle")
+        .attr("cx", (d) => d.x)
+        .attr("cy", (d) => d.y)
+        .attr("r", (d) => d.r)
+        .attr("fill", "url(#particleGradient)")
+        .attr("opacity", (d) => d.opacity);
+
+      let animationId: number;
+      function animate() {
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > width) p.vx *= -1;
+          if (p.y < 0 || p.y > height) p.vy *= -1;
+        });
+        circles.attr("cx", (d) => d.x).attr("cy", (d) => d.y);
+        animationId = requestAnimationFrame(animate);
+      }
+      animate();
+
+      return () => {
+        cancelAnimationFrame(animationId);
+      };
     }
-    animate()
+
+    const cleanup = drawParticles();
+
+    const handleResize = () => {
+      if (cleanup) cleanup();
+      drawParticles();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      svg.remove()
-    }
-  }, [])
+      window.removeEventListener("resize", handleResize);
+      if (cleanup) cleanup();
+    };
+  }, []);
 
   const stats = [
-    { value: summaryStats.totalSmallAreas.toLocaleString(), label: "UK Small Areas" },
-    { value: (summaryStats.totalPopulation / 1000000).toFixed(1) + "M", label: "Population Covered" },
-    { value: formatMillions(totalPositiveBenefits), label: "Total Benefits" }
-  ]
+    {
+      value: summaryStats.totalSmallAreas.toLocaleString(),
+      label: "UK Small Areas",
+    },
+    {
+      value: (summaryStats.totalPopulation / 1000000).toFixed(1) + "M",
+      label: "Population Covered",
+    },
+    { value: formatMillions(totalPositiveBenefits), label: "Total Benefits" },
+  ];
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-black via-gray-900 to-black">
       <div ref={canvasRef} className="absolute inset-0 opacity-50" />
-      
+
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -98,13 +137,13 @@ export function Hero() {
           >
             UK Climate Action Co-Benefits {summaryStats.yearsSpan}
           </motion.p>
-          
+
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 tracking-tight">
             Tomorrow Begins
             <br />
             <span className="text-gradient">Today</span>
           </h1>
-          
+
           <motion.p
             className="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-8 font-light"
             initial={{ opacity: 0, y: 20 }}
@@ -145,7 +184,9 @@ export function Hero() {
               <div className="text-2xl md:text-4xl font-bold text-gradient mb-1">
                 {stat.value}
               </div>
-              <div className="text-xs md:text-sm text-gray-400">{stat.label}</div>
+              <div className="text-xs md:text-sm text-gray-400">
+                {stat.label}
+              </div>
             </motion.div>
           ))}
         </motion.div>
@@ -156,7 +197,6 @@ export function Hero() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
         >
-          
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
@@ -169,5 +209,5 @@ export function Hero() {
 
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
     </section>
-  )
+  );
 }

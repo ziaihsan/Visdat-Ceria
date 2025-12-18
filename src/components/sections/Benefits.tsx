@@ -55,67 +55,71 @@ function BarChart() {
   useEffect(() => {
     if (!chartRef.current || !isInView) return;
 
-    const container = chartRef.current;
-    container.innerHTML = "";
+    function drawChart() {
+      const container = chartRef.current;
+      if (!container) return;
+      container.innerHTML = "";
 
-    const margin = { top: 20, right: 100, bottom: 20, left: 140 };
-    const width =
-      Math.min(container.clientWidth, 700) - margin.left - margin.right;
-    const height: number = 380 - margin.top - margin.bottom;
+      const margin = { top: 20, right: 100, bottom: 20, left: 140 };
+      const width =
+        Math.min(container.clientWidth, 700) - margin.left - margin.right;
+      const height: number = 380 - margin.top - margin.bottom;
 
-    // Create tooltip
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.9)")
-      .style("color", "#fff")
-      .style("padding", "12px 16px")
-      .style("border-radius", "12px")
-      .style("font-size", "14px")
-      .style("pointer-events", "none")
-      .style("z-index", "1000")
-      .style("border", "1px solid rgba(16, 185, 129, 0.3)")
-      .style("backdrop-filter", "blur(10px)");
+      // Create tooltip
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("visibility", "hidden")
+        .style("background-color", "rgba(0, 0, 0, 0.9)")
+        .style("color", "#fff")
+        .style("padding", "12px 16px")
+        .style("border-radius", "12px")
+        .style("font-size", "14px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("border", "1px solid rgba(16, 185, 129, 0.3)")
+        .style("backdrop-filter", "blur(10px)");
 
-    const svg = d3
-      .select(container)
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+      const svg = d3
+        .select(container)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const x = d3
-      .scaleLinear()
-      .domain([0, d3.max(benefitsData, (d) => d.value)!])
-      .range([0, width]);
+      const x = d3
+        .scaleLinear()
+        .domain([0, d3.max(benefitsData, (d) => d.value)!])
+        .range([0, width]);
 
-    const y = d3
-      .scaleBand()
-      .domain(benefitsData.map((d) => d.name))
-      .range([0, height])
-      .padding(0.35);
+      const y = d3
+        .scaleBand()
+        .domain(benefitsData.map((d) => d.name))
+        .range([0, height])
+        .padding(0.35);
 
-    svg
-      .selectAll(".bar")
-      .data(benefitsData)
-      .enter()
-      .append("rect")
-      .attr("class", "bar")
-      .attr("x", 0)
-      .attr("y", (d) => y(d.name)!)
-      .attr("height", y.bandwidth())
-      .attr("fill", (d) => d.color)
-      .attr("rx", y.bandwidth() / 2)
-      .attr("width", 0)
-      .style("cursor", "pointer")
-      .on("mouseover", function (event, d) {
-        d3.select(this).transition().duration(200).attr("opacity", 0.8);
+      svg
+        .selectAll(".bar")
+        .data(benefitsData)
+        .enter()
+        .append("rect")
+        .attr("class", "bar")
+        .attr("x", 0)
+        .attr("y", (d) => y(d.name)!)
+        .attr("height", y.bandwidth())
+        .attr("fill", (d) => d.color)
+        .attr("rx", 15)
+        .attr("width", 0)
+        .style("cursor", "pointer")
+        .on("mouseover", function (event, d) {
+          d3.select(this).transition().duration(200).attr("opacity", 0.8);
 
-        const percentage = ((d.value / totalPositiveBenefits) * 100).toFixed(1);
-        tooltip.style("visibility", "visible").html(`
+          const percentage = ((d.value / totalPositiveBenefits) * 100).toFixed(
+            1
+          );
+          tooltip.style("visibility", "visible").html(`
           <div>
             <div style="font-weight: 600; margin-bottom: 6px; color: ${
               d.color
@@ -134,55 +138,64 @@ function BarChart() {
             }
           </div>
         `);
-      })
-      .on("mousemove", function (event) {
-        tooltip
-          .style("top", event.pageY - 10 + "px")
-          .style("left", event.pageX + 10 + "px");
-      })
-      .on("mouseout", function () {
-        d3.select(this).transition().duration(200).attr("opacity", 1);
+        })
+        .on("mousemove", function (event) {
+          tooltip
+            .style("top", event.pageY - 10 + "px")
+            .style("left", event.pageX + 10 + "px");
+        })
+        .on("mouseout", function () {
+          d3.select(this).transition().duration(200).attr("opacity", 1);
 
-        tooltip.style("visibility", "hidden");
-      })
-      .transition()
-      .duration(1000)
-      .delay((_, i) => i * 100)
-      .attr("width", (d) => x(d.value));
+          tooltip.style("visibility", "hidden");
+        })
+        .transition()
+        .duration(1000)
+        .delay((_, i) => i * 100)
+        .attr("width", (d) => x(d.value));
 
-    svg
-      .selectAll(".label")
-      .data(benefitsData)
-      .enter()
-      .append("text")
-      .attr("x", -10)
-      .attr("y", (d) => y(d.name)! + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("text-anchor", "end")
-      .attr("fill", "#9ca3af")
-      .attr("font-size", "12px")
-      .text((d) => d.name);
+      svg
+        .selectAll(".label")
+        .data(benefitsData)
+        .enter()
+        .append("text")
+        .attr("x", -10)
+        .attr("y", (d) => y(d.name)! + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#9ca3af")
+        .attr("font-size", "12px")
+        .text((d) => d.name);
 
-    svg
-      .selectAll(".value")
-      .data(benefitsData)
-      .enter()
-      .append("text")
-      .attr("x", (d) => x(d.value) + 8)
-      .attr("y", (d) => y(d.name)! + y.bandwidth() / 2)
-      .attr("dy", "0.35em")
-      .attr("fill", "#fff")
-      .attr("font-size", "13px")
-      .attr("font-weight", "600")
-      .style("opacity", 0)
-      .text((d) => formatMillions(d.value))
-      .transition()
-      .delay((_, i) => 1000 + i * 100)
-      .style("opacity", 1);
+      svg
+        .selectAll(".value")
+        .data(benefitsData)
+        .enter()
+        .append("text")
+        .attr("x", (d) => x(d.value) + 8)
+        .attr("y", (d) => y(d.name)! + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#fff")
+        .attr("font-size", "13px")
+        .attr("font-weight", "600")
+        .style("opacity", 0)
+        .text((d) => formatMillions(d.value))
+        .transition()
+        .delay((_, i) => 1000 + i * 100)
+        .style("opacity", 1);
+    }
+
+    drawChart();
+
+    const handleResize = () => {
+      drawChart();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     // Cleanup on unmount
     return () => {
-      tooltip.remove();
+      window.removeEventListener("resize", handleResize);
     };
   }, [isInView]);
 
@@ -201,76 +214,78 @@ function PieChart() {
   useEffect(() => {
     if (!chartRef.current || !isInView) return;
 
-    const container = chartRef.current;
-    container.innerHTML = "";
+    function drawChart() {
+      const container = chartRef.current;
+      if (!container) return;
+      container.innerHTML = "";
 
-    const width = 300;
-    const height = 300;
-    const radius = Math.min(width, height) / 2 - 10;
+      const width = 300;
+      const height = 300;
+      const radius = Math.min(width, height) / 2 - 10;
 
-    // Create tooltip
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.9)")
-      .style("color", "#fff")
-      .style("padding", "12px 16px")
-      .style("border-radius", "12px")
-      .style("font-size", "14px")
-      .style("pointer-events", "none")
-      .style("z-index", "1000")
-      .style("border", "1px solid rgba(16, 185, 129, 0.3)")
-      .style("backdrop-filter", "blur(10px)");
+      // Create tooltip
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("visibility", "hidden")
+        .style("background-color", "rgba(0, 0, 0, 0.9)")
+        .style("color", "#fff")
+        .style("padding", "12px 16px")
+        .style("border-radius", "12px")
+        .style("font-size", "14px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("border", "1px solid rgba(16, 185, 129, 0.3)")
+        .style("backdrop-filter", "blur(10px)");
 
-    const svg = d3
-      .select(container)
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .append("g")
-      .attr("transform", `translate(${width / 2},${height / 2})`);
+      const svg = d3
+        .select(container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
 
-    const pie = d3
-      .pie<(typeof benefitsData)[0]>()
-      .value((d) => d.value)
-      .sort(null);
+      const pie = d3
+        .pie<(typeof benefitsData)[0]>()
+        .value((d) => d.value)
+        .sort(null);
 
-    const arc = d3
-      .arc<d3.PieArcDatum<(typeof benefitsData)[0]>>()
-      .innerRadius(radius * 0.55)
-      .outerRadius(radius);
+      const arc = d3
+        .arc<d3.PieArcDatum<(typeof benefitsData)[0]>>()
+        .innerRadius(radius * 0.55)
+        .outerRadius(radius);
 
-    const arcs = svg
-      .selectAll(".arc")
-      .data(pie(benefitsData))
-      .enter()
-      .append("g");
+      const arcs = svg
+        .selectAll(".arc")
+        .data(pie(benefitsData))
+        .enter()
+        .append("g");
 
-    arcs
-      .append("path")
-      .attr("d", arc)
-      .attr("fill", (d) => d.data.color)
-      .attr("stroke", "#000")
-      .attr("stroke-width", 2)
-      .style("opacity", 0)
-      .style("cursor", "pointer")
-      .on("mouseover", function (event, d) {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .style("opacity", 0.8)
-          .attr("transform", function () {
-            const [x, y] = arc.centroid(d);
-            return `translate(${x * 0.1},${y * 0.1})`;
-          });
+      arcs
+        .append("path")
+        .attr("d", arc)
+        .attr("fill", (d) => d.data.color)
+        .attr("stroke", "#000")
+        .attr("stroke-width", 2)
+        .style("opacity", 0)
+        .style("cursor", "pointer")
+        .on("mouseover", function (event, d) {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .style("opacity", 0.8)
+            .attr("transform", function () {
+              const [x, y] = arc.centroid(d);
+              return `translate(${x * 0.1},${y * 0.1})`;
+            });
 
-        const percentage = (
-          (d.data.value / totalPositiveBenefits) *
-          100
-        ).toFixed(1);
-        tooltip.style("visibility", "visible").html(`
+          const percentage = (
+            (d.data.value / totalPositiveBenefits) *
+            100
+          ).toFixed(1);
+          tooltip.style("visibility", "visible").html(`
           <div>
             <div style="font-weight: 600; margin-bottom: 6px; color: ${
               d.data.color
@@ -284,52 +299,61 @@ function PieChart() {
             }</div>
           </div>
         `);
-      })
-      .on("mousemove", function (event) {
-        tooltip
-          .style("top", event.pageY - 10 + "px")
-          .style("left", event.pageX + 10 + "px");
-      })
-      .on("mouseout", function () {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .style("opacity", 1)
-          .attr("transform", "translate(0,0)");
+        })
+        .on("mousemove", function (event) {
+          tooltip
+            .style("top", event.pageY - 10 + "px")
+            .style("left", event.pageX + 10 + "px");
+        })
+        .on("mouseout", function () {
+          d3.select(this)
+            .transition()
+            .duration(200)
+            .style("opacity", 1)
+            .attr("transform", "translate(0,0)");
 
-        tooltip.style("visibility", "hidden");
-      })
-      .transition()
-      .duration(1000)
-      .delay((_, i) => i * 80)
-      .style("opacity", 1)
-      .attrTween("d", function (d) {
-        const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
-        return (t) => arc(i(t))!;
-      });
+          tooltip.style("visibility", "hidden");
+        })
+        .transition()
+        .duration(1000)
+        .delay((_, i) => i * 80)
+        .style("opacity", 1)
+        .attrTween("d", function (d) {
+          const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+          return (t) => arc(i(t))!;
+        });
 
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "-0.3em")
-      .attr("fill", "#9ca3af")
-      .attr("font-size", "12px")
-      .style("pointer-events", "none")
-      .text("Total Benefits");
+      svg
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "-0.3em")
+        .attr("fill", "#9ca3af")
+        .attr("font-size", "12px")
+        .style("pointer-events", "none")
+        .text("Total Benefits");
 
-    svg
-      .append("text")
-      .attr("text-anchor", "middle")
-      .attr("dy", "1em")
-      .attr("fill", "#10b981")
-      .attr("font-size", "18px")
-      .attr("font-weight", "700")
-      .style("pointer-events", "none")
-      .text(formatMillions(totalPositiveBenefits));
+      svg
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("dy", "1em")
+        .attr("fill", "#10b981")
+        .attr("font-size", "18px")
+        .attr("font-weight", "700")
+        .style("pointer-events", "none")
+        .text(formatMillions(totalPositiveBenefits));
+    }
+
+    drawChart();
+
+    const handleResize = () => {
+      drawChart();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     // Cleanup on unmount
     return () => {
-      tooltip.remove();
+      window.removeEventListener("resize", handleResize);
     };
   }, [isInView]);
 

@@ -20,82 +20,84 @@ function Treemap() {
   useEffect(() => {
     if (!chartRef.current || !isInView) return;
 
-    const container = chartRef.current;
-    container.innerHTML = "";
+    function drawChart() {
+      const container = chartRef.current;
+      if (!container) return;
+      container.innerHTML = "";
 
-    // Ensure container has width
-    const width = Math.max(container.clientWidth, 300);
-    const height = window.innerWidth < 768 ? 300 : 400; // Smaller height on mobile
+      // Ensure container has width
+      const width = Math.max(container.clientWidth, 300);
+      const height = window.innerWidth < 768 ? 300 : 400; // Smaller height on mobile
 
-    // Create tooltip
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.9)")
-      .style("color", "#fff")
-      .style("padding", "12px 16px")
-      .style("border-radius", "12px")
-      .style("font-size", "14px")
-      .style("pointer-events", "none")
-      .style("z-index", "1000")
-      .style("border", "1px solid rgba(16, 185, 129, 0.3)")
-      .style("backdrop-filter", "blur(10px)")
-      .style("max-width", "280px");
+      // Create tooltip
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("visibility", "hidden")
+        .style("background-color", "rgba(0, 0, 0, 0.9)")
+        .style("color", "#fff")
+        .style("padding", "12px 16px")
+        .style("border-radius", "12px")
+        .style("font-size", "14px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("border", "1px solid rgba(16, 185, 129, 0.3)")
+        .style("backdrop-filter", "blur(10px)")
+        .style("max-width", "280px");
 
-    const svg = d3
-      .select(container)
-      .append("svg")
-      .attr("width", "100%")
-      .attr("height", height)
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("preserveAspectRatio", "xMidYMid meet")
-      .style("max-width", "100%")
-      .style("height", "auto");
+      const svg = d3
+        .select(container)
+        .append("svg")
+        .attr("width", "100%")
+        .attr("height", height)
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("max-width", "100%")
+        .style("height", "auto");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const root = d3
-      .hierarchy<any>({ children: economicData })
-      .sum((d) => d.value || 0);
-
-    d3.treemap().size([width, height]).padding(6).round(true)(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      root as any
-    );
+      const root = d3
+        .hierarchy<any>({ children: economicData })
+        .sum((d) => d.value || 0);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const leaves = root.leaves() as any[];
+      d3.treemap().size([width, height]).padding(6).round(true)(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        root as any
+      );
 
-    const cells = svg
-      .selectAll(".cell")
-      .data(leaves)
-      .enter()
-      .append("g")
-      .attr("class", "cell")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .attr("transform", (d: any) => `translate(${d.x0 || 0},${d.y0 || 0})`);
+      const leaves = root.leaves() as any[];
 
-    cells
-      .append("rect")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .attr("width", (d: any) => (d.x1 || 0) - (d.x0 || 0))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .attr("height", (d: any) => (d.y1 || 0) - (d.y0 || 0))
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .attr("fill", (d: any) => d.data.color)
-      .attr("rx", 16)
-      .style("opacity", 0)
-      .style("cursor", "pointer")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .on("mouseover", function (event: any, d: any) {
-        d3.select(this).transition().duration(200).style("opacity", 1);
+      const cells = svg
+        .selectAll(".cell")
+        .data(leaves)
+        .enter()
+        .append("g")
+        .attr("class", "cell")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .attr("transform", (d: any) => `translate(${d.x0 || 0},${d.y0 || 0})`);
 
-        const percentage = (
-          (d.data.value / totalPositiveBenefits) *
-          100
-        ).toFixed(1);
-        tooltip.style("visibility", "visible").html(`
+      cells
+        .append("rect")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .attr("width", (d: any) => (d.x1 || 0) - (d.x0 || 0))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .attr("height", (d: any) => (d.y1 || 0) - (d.y0 || 0))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .attr("fill", (d: any) => d.data.color)
+        .attr("rx", 16)
+        .style("opacity", 0)
+        .style("cursor", "pointer")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .on("mouseover", function (event: any, d: any) {
+          d3.select(this).transition().duration(200).style("opacity", 1);
+
+          const percentage = (
+            (d.data.value / totalPositiveBenefits) *
+            100
+          ).toFixed(1);
+          tooltip.style("visibility", "visible").html(`
           <div>
             <div style="font-weight: 600; margin-bottom: 6px; color: ${
               d.data.color
@@ -114,83 +116,92 @@ function Treemap() {
             }
           </div>
         `);
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .on("mousemove", function (event: any) {
-        tooltip
-          .style("top", event.pageY - 10 + "px")
-          .style("left", event.pageX + 10 + "px");
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .on("mouseout", function () {
-        d3.select(this).transition().duration(200).style("opacity", 0.9);
+        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .on("mousemove", function (event: any) {
+          tooltip
+            .style("top", event.pageY - 10 + "px")
+            .style("left", event.pageX + 10 + "px");
+        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .on("mouseout", function () {
+          d3.select(this).transition().duration(200).style("opacity", 0.9);
 
-        tooltip.style("visibility", "hidden");
-      })
-      .transition()
-      .duration(800)
-      .delay((_, i) => i * 150)
-      .style("opacity", 0.9);
+          tooltip.style("visibility", "hidden");
+        })
+        .transition()
+        .duration(800)
+        .delay((_, i) => i * 150)
+        .style("opacity", 0.9);
 
-    cells
-      .append("text")
-      .attr("x", 16)
-      .attr("y", 30)
-      .attr("fill", "#fff")
-      .attr("font-size", window.innerWidth < 768 ? "11px" : "14px")
-      .attr("font-weight", "600")
-      .style("opacity", 0)
-      .style("pointer-events", "none")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .text((d: any) => d.data.name)
-      .transition()
-      .delay((_, i) => 800 + i * 150)
-      .style("opacity", 1);
+      cells
+        .append("text")
+        .attr("x", 16)
+        .attr("y", 30)
+        .attr("fill", "#fff")
+        .attr("font-size", window.innerWidth < 768 ? "11px" : "14px")
+        .attr("font-weight", "600")
+        .style("opacity", 0)
+        .style("pointer-events", "none")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .text((d: any) => d.data.name)
+        .transition()
+        .delay((_, i) => 800 + i * 150)
+        .style("opacity", 1);
 
-    cells
-      .append("text")
-      .attr("x", 16)
-      .attr("y", window.innerWidth < 768 ? 50 : 58)
-      .attr("fill", "#fff")
-      .attr("font-size", window.innerWidth < 768 ? "20px" : "28px")
-      .attr("font-weight", "700")
-      .style("opacity", 0)
-      .style("pointer-events", "none")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .text((d: any) => formatMillions(d.data.value))
-      .transition()
-      .delay((_, i) => 900 + i * 150)
-      .style("opacity", 1);
+      cells
+        .append("text")
+        .attr("x", 16)
+        .attr("y", window.innerWidth < 768 ? 50 : 58)
+        .attr("fill", "#fff")
+        .attr("font-size", window.innerWidth < 768 ? "20px" : "28px")
+        .attr("font-weight", "700")
+        .style("opacity", 0)
+        .style("pointer-events", "none")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .text((d: any) => formatMillions(d.data.value))
+        .transition()
+        .delay((_, i) => 900 + i * 150)
+        .style("opacity", 1);
 
-    cells
-      .append("text")
-      .attr("x", 16)
-      .attr("y", window.innerWidth < 768 ? 68 : 80)
-      .attr("fill", "#fff")
-      .attr("font-size", window.innerWidth < 768 ? "9px" : "11px")
-      .style("opacity", 0)
-      .style("pointer-events", "none")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .text((d: any) => d.data.description)
-      .each(function (d: any) {
-        // Wrap text on mobile to prevent overflow
-        if (window.innerWidth < 768) {
-          const text = d3.select(this);
-          const words = d.data.description.split(/\s+/);
-          const maxWidth = d.x1 - d.x0 - 32; // Leave padding
+      cells
+        .append("text")
+        .attr("x", 16)
+        .attr("y", window.innerWidth < 768 ? 68 : 80)
+        .attr("fill", "#fff")
+        .attr("font-size", window.innerWidth < 768 ? "9px" : "11px")
+        .style("opacity", 0)
+        .style("pointer-events", "none")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .text((d: any) => d.data.description)
+        .each(function (d: any) {
+          // Wrap text on mobile to prevent overflow
+          if (window.innerWidth < 768) {
+            const text = d3.select(this);
+            const words = d.data.description.split(/\s+/);
+            const maxWidth = d.x1 - d.x0 - 32; // Leave padding
 
-          if (words.length > 5) {
-            text.text(words.slice(0, 5).join(" ") + "...");
+            if (words.length > 5) {
+              text.text(words.slice(0, 5).join(" ") + "...");
+            }
           }
-        }
-      })
-      .transition()
-      .delay((_, i) => 1000 + i * 150)
-      .style("opacity", 0.7);
+        })
+        .transition()
+        .delay((_, i) => 1000 + i * 150)
+        .style("opacity", 0.7);
+    }
+
+    drawChart();
+
+    const handleResize = () => {
+      drawChart();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     // Cleanup on unmount
     return () => {
-      tooltip.remove();
+      window.removeEventListener("resize", handleResize);
     };
   }, [isInView]);
 
@@ -279,7 +290,17 @@ function RegionalMap() {
       });
     });
 
+    // Handle window resize
+    const handleResize = () => {
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+
     return () => {
+      window.removeEventListener("resize", handleResize);
       map.remove();
     };
   }, [isInView]);
@@ -357,7 +378,17 @@ function LocalAuthoritiesMap() {
       });
     });
 
+    // Handle window resize
+    const handleResize = () => {
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+
     return () => {
+      window.removeEventListener("resize", handleResize);
       map.remove();
     };
   }, [isInView]);

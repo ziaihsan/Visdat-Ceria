@@ -22,127 +22,129 @@ function LineChart({ year }: { year: number }) {
   useEffect(() => {
     if (!chartRef.current || !isInView) return;
 
-    const container = chartRef.current;
-    container.innerHTML = "";
+    function drawChart() {
+      const container = chartRef.current;
+      if (!container) return;
+      container.innerHTML = "";
 
-    // Responsive margins
-    const isMobile = window.innerWidth < 768;
-    const margin = {
-      top: 20,
-      right: isMobile ? 5 : 140,
-      bottom: isMobile ? 35 : 50,
-      left: isMobile ? 45 : 70,
-    };
-    // Use container width without minimum constraint to prevent overflow
-    const containerWidth = container.clientWidth || 300;
-    const width = containerWidth - margin.left - margin.right;
-    const height = (isMobile ? 280 : 400) - margin.top - margin.bottom;
+      // Responsive margins
+      const isMobile = window.innerWidth < 768;
+      const margin = {
+        top: 20,
+        right: isMobile ? 5 : 140,
+        bottom: isMobile ? 35 : 50,
+        left: isMobile ? 45 : 70,
+      };
+      // Use container width without minimum constraint to prevent overflow
+      const containerWidth = container.clientWidth || 300;
+      const width = containerWidth - margin.left - margin.right;
+      const height = (isMobile ? 280 : 400) - margin.top - margin.bottom;
 
-    // Create tooltip
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("background-color", "rgba(0, 0, 0, 0.9)")
-      .style("color", "#fff")
-      .style("padding", "12px 16px")
-      .style("border-radius", "12px")
-      .style("font-size", "14px")
-      .style("pointer-events", "none")
-      .style("z-index", "1000")
-      .style("border", "1px solid rgba(16, 185, 129, 0.3)")
-      .style("backdrop-filter", "blur(10px)")
-      .style("max-width", "280px");
+      // Create tooltip
+      const tooltip = d3
+        .select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("visibility", "hidden")
+        .style("background-color", "rgba(0, 0, 0, 0.9)")
+        .style("color", "#fff")
+        .style("padding", "12px 16px")
+        .style("border-radius", "12px")
+        .style("font-size", "14px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("border", "1px solid rgba(16, 185, 129, 0.3)")
+        .style("backdrop-filter", "blur(10px)")
+        .style("max-width", "280px");
 
-    const svg = d3
-      .select(container)
-      .append("svg")
-      .attr("width", "100%")
-      .attr("height", height + margin.top + margin.bottom)
-      .attr(
-        "viewBox",
-        `0 0 ${width + margin.left + margin.right} ${
-          height + margin.top + margin.bottom
-        }`
-      )
-      .attr("preserveAspectRatio", "xMinYMid meet")
-      .style("max-width", "100%")
-      .style("display", "block")
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+      const svg = d3
+        .select(container)
+        .append("svg")
+        .attr("width", "100%")
+        .attr("height", height + margin.top + margin.bottom)
+        .attr(
+          "viewBox",
+          `0 0 ${width + margin.left + margin.right} ${
+            height + margin.top + margin.bottom
+          }`
+        )
+        .attr("preserveAspectRatio", "xMinYMid meet")
+        .style("max-width", "100%")
+        .style("display", "block")
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const x = d3.scaleLinear().domain([2025, 2050]).range([0, width]);
+      const x = d3.scaleLinear().domain([2025, 2050]).range([0, width]);
 
-    const y = d3.scaleLinear().domain([0, 14000]).range([height, 0]);
+      const y = d3.scaleLinear().domain([0, 14000]).range([height, 0]);
 
-    // Grid
-    svg
-      .append("g")
-      .attr("class", "grid")
-      .call(
-        d3
-          .axisLeft(y)
-          .tickSize(-width)
-          .tickFormat(() => "")
-      )
-      .selectAll("line")
-      .attr("stroke", "#333")
-      .attr("stroke-opacity", 0.3);
-
-    svg.selectAll(".grid .domain").remove();
-
-    // Lines
-    categories.forEach((cat, idx) => {
-      const line = d3
-        .line<(typeof timelineData)[0]>()
-        .x((d) => x(d.year))
-        .y((d) => y(d[cat.key as keyof typeof d] as number))
-        .curve(d3.curveMonotoneX);
-
-      const path = svg
-        .append("path")
-        .datum(timelineData)
-        .attr("fill", "none")
-        .attr("stroke", cat.color)
-        .attr("stroke-width", cat.key === "total" ? 4 : 2)
-        .attr("d", line);
-
-      if (!hasAnimated) {
-        const pathLength = path.node()!.getTotalLength();
-        path
-          .attr("stroke-dasharray", pathLength)
-          .attr("stroke-dashoffset", pathLength)
-          .transition()
-          .duration(2000)
-          .delay(idx * 200)
-          .attr("stroke-dashoffset", 0);
-      }
-
-      // Add interactive circles on data points
+      // Grid
       svg
-        .selectAll(`.circle-${cat.key}`)
-        .data(timelineData)
-        .enter()
-        .append("circle")
-        .attr("class", `circle-${cat.key}`)
-        .attr("cx", (d) => x(d.year))
-        .attr("cy", (d) => y(d[cat.key as keyof typeof d] as number))
-        .attr("r", cat.key === "total" ? 6 : 4)
-        .attr("fill", cat.color)
-        .attr("stroke", "#000")
-        .attr("stroke-width", 2)
-        .style("opacity", 0)
-        .style("cursor", "pointer")
-        .on("mouseover", function (event, d) {
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("r", cat.key === "total" ? 8 : 6)
-            .style("opacity", 1);
+        .append("g")
+        .attr("class", "grid")
+        .call(
+          d3
+            .axisLeft(y)
+            .tickSize(-width)
+            .tickFormat(() => "")
+        )
+        .selectAll("line")
+        .attr("stroke", "#333")
+        .attr("stroke-opacity", 0.3);
 
-          const value = d[cat.key as keyof typeof d] as number;
-          tooltip.style("visibility", "visible").html(`
+      svg.selectAll(".grid .domain").remove();
+
+      // Lines
+      categories.forEach((cat, idx) => {
+        const line = d3
+          .line<(typeof timelineData)[0]>()
+          .x((d) => x(d.year))
+          .y((d) => y(d[cat.key as keyof typeof d] as number))
+          .curve(d3.curveMonotoneX);
+
+        const path = svg
+          .append("path")
+          .datum(timelineData)
+          .attr("fill", "none")
+          .attr("stroke", cat.color)
+          .attr("stroke-width", cat.key === "total" ? 4 : 2)
+          .attr("d", line);
+
+        if (!hasAnimated) {
+          const pathLength = path.node()!.getTotalLength();
+          path
+            .attr("stroke-dasharray", pathLength)
+            .attr("stroke-dashoffset", pathLength)
+            .transition()
+            .duration(2000)
+            .delay(idx * 200)
+            .attr("stroke-dashoffset", 0);
+        }
+
+        // Add interactive circles on data points
+        svg
+          .selectAll(`.circle-${cat.key}`)
+          .data(timelineData)
+          .enter()
+          .append("circle")
+          .attr("class", `circle-${cat.key}`)
+          .attr("cx", (d) => x(d.year))
+          .attr("cy", (d) => y(d[cat.key as keyof typeof d] as number))
+          .attr("r", cat.key === "total" ? 6 : 4)
+          .attr("fill", cat.color)
+          .attr("stroke", "#000")
+          .attr("stroke-width", 2)
+          .style("opacity", 0)
+          .style("cursor", "pointer")
+          .on("mouseover", function (event, d) {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("r", cat.key === "total" ? 8 : 6)
+              .style("opacity", 1);
+
+            const value = d[cat.key as keyof typeof d] as number;
+            tooltip.style("visibility", "visible").html(`
             <div>
               <div style="font-weight: 600; margin-bottom: 6px; color: ${
                 cat.color
@@ -158,117 +160,128 @@ function LineChart({ year }: { year: number }) {
               }</div>
             </div>
           `);
-        })
-        .on("mousemove", function (event) {
-          tooltip
-            .style("top", event.pageY - 10 + "px")
-            .style("left", event.pageX + 10 + "px");
-        })
-        .on("mouseout", function () {
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("r", cat.key === "total" ? 6 : 4)
-            .style("opacity", 0);
+          })
+          .on("mousemove", function (event) {
+            tooltip
+              .style("top", event.pageY - 10 + "px")
+              .style("left", event.pageX + 10 + "px");
+          })
+          .on("mouseout", function () {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("r", cat.key === "total" ? 6 : 4)
+              .style("opacity", 0);
 
-          tooltip.style("visibility", "hidden");
-        })
-        .transition()
-        .delay(idx * 200 + 2000)
-        .duration(500)
-        .style("opacity", 0.7);
-    });
-
-    // Year indicator
-    if (year > 2025) {
-      svg
-        .append("line")
-        .attr("x1", x(year))
-        .attr("x2", x(year))
-        .attr("y1", 0)
-        .attr("y2", height)
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 2)
-        .attr("stroke-dasharray", "5,5")
-        .attr("opacity", 0.5);
-
-      // Show values at year - find exact year or closest year
-      const yearData =
-        timelineData.find((d) => d.year === year) ||
-        timelineData.reduce((prev, curr) =>
-          Math.abs(curr.year - year) < Math.abs(prev.year - year) ? curr : prev
-        );
-      if (yearData) {
-        svg
-          .append("text")
-          .attr("x", x(year) + 10)
-          .attr("y", 20)
-          .attr("fill", "#10b981")
-          .attr("font-size", isMobile ? "12px" : "14px")
-          .attr("font-weight", "700")
-          .text(formatMillions(yearData.total));
-      }
-    }
-
-    // Axes
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(6))
-      .attr("color", "#666");
-
-    svg
-      .append("g")
-      .call(
-        d3
-          .axisLeft(y)
-          .tickFormat((d) => `£${(d as number) / 1000}B`)
-          .ticks(7)
-      )
-      .attr("color", "#666");
-
-    // Y axis label
-    svg
-      .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", isMobile ? -40 : -55)
-      .attr("x", -height / 2)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#666")
-      .attr("font-size", isMobile ? "10px" : "12px")
-      .text(isMobile ? "Benefits (GBP)" : "Annual Benefits (GBP)");
-
-    // Legend - position differently on mobile
-    if (!isMobile) {
-      const legend = svg
-        .append("g")
-        .attr("transform", `translate(${width + 15}, 0)`);
-
-      categories.forEach((cat, i) => {
-        const g = legend
-          .append("g")
-          .attr("transform", `translate(0, ${i * 28})`);
-
-        g.append("rect")
-          .attr("width", 20)
-          .attr("height", cat.key === "total" ? 4 : 2)
-          .attr("fill", cat.color)
-          .attr("rx", 1);
-
-        g.append("text")
-          .attr("x", 28)
-          .attr("y", 4)
-          .attr("fill", "#9ca3af")
-          .attr("font-size", "10px")
-          .text(cat.label);
+            tooltip.style("visibility", "hidden");
+          })
+          .transition()
+          .delay(idx * 200 + 2000)
+          .duration(500)
+          .style("opacity", 0.7);
       });
+
+      // Year indicator
+      if (year > 2025) {
+        svg
+          .append("line")
+          .attr("x1", x(year))
+          .attr("x2", x(year))
+          .attr("y1", 0)
+          .attr("y2", height)
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "5,5")
+          .attr("opacity", 0.5);
+
+        // Show values at year - find exact year or closest year
+        const yearData =
+          timelineData.find((d) => d.year === year) ||
+          timelineData.reduce((prev, curr) =>
+            Math.abs(curr.year - year) < Math.abs(prev.year - year)
+              ? curr
+              : prev
+          );
+        if (yearData) {
+          svg
+            .append("text")
+            .attr("x", x(year) + 10)
+            .attr("y", 20)
+            .attr("fill", "#10b981")
+            .attr("font-size", isMobile ? "12px" : "14px")
+            .attr("font-weight", "700")
+            .text(formatMillions(yearData.total));
+        }
+      }
+
+      // Axes
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(6))
+        .attr("color", "#666");
+
+      svg
+        .append("g")
+        .call(
+          d3
+            .axisLeft(y)
+            .tickFormat((d) => `£${(d as number) / 1000}B`)
+            .ticks(7)
+        )
+        .attr("color", "#666");
+
+      // Y axis label
+      svg
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", isMobile ? -40 : -55)
+        .attr("x", -height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .attr("font-size", isMobile ? "10px" : "12px")
+        .text(isMobile ? "Benefits (GBP)" : "Annual Benefits (GBP)");
+
+      // Legend - position differently on mobile
+      if (!isMobile) {
+        const legend = svg
+          .append("g")
+          .attr("transform", `translate(${width + 15}, 0)`);
+
+        categories.forEach((cat, i) => {
+          const g = legend
+            .append("g")
+            .attr("transform", `translate(0, ${i * 28})`);
+
+          g.append("rect")
+            .attr("width", 20)
+            .attr("height", cat.key === "total" ? 4 : 2)
+            .attr("fill", cat.color)
+            .attr("rx", 1);
+
+          g.append("text")
+            .attr("x", 28)
+            .attr("y", 4)
+            .attr("fill", "#9ca3af")
+            .attr("font-size", "10px")
+            .text(cat.label);
+        });
+      }
+
+      if (!hasAnimated) setHasAnimated(true);
     }
 
-    if (!hasAnimated) setHasAnimated(true);
+    drawChart();
+
+    const handleResize = () => {
+      drawChart();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     // Cleanup on unmount
     return () => {
-      tooltip.remove();
+      window.removeEventListener("resize", handleResize);
     };
   }, [isInView, year, hasAnimated]);
 

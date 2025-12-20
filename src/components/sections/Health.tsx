@@ -1,122 +1,11 @@
 import { motion, useInView, Variants } from "framer-motion";
-import { useRef, useEffect } from "react";
-import * as d3 from "d3";
+import { useRef } from "react";
 import { GlassCard } from "@/components/ui/card";
 import {
   healthOutcomes,
   damagePathwayData,
   formatMillions,
 } from "@/data/metrics";
-
-interface BubbleNode extends d3.SimulationNodeDatum {
-  name: string;
-  value: number;
-  color: string;
-}
-
-function BubbleChart() {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(chartRef, { once: true, margin: "-100px" });
-
-  useEffect(() => {
-    if (!chartRef.current || !isInView) return;
-
-    function drawChart() {
-      const container = chartRef.current;
-      if (!container) return;
-      container.innerHTML = "";
-
-      const width = container.clientWidth;
-      const height = 380;
-
-      const bubbleData: BubbleNode[] = damagePathwayData.map((d) => ({
-        name: d.pathway,
-        value: Math.sqrt(d.value / 1000) * 8, // Better scaling for visibility
-        color: d.color,
-      }));
-
-      const svg = d3
-        .select(container)
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-      const simulation = d3
-        .forceSimulation<BubbleNode>(bubbleData)
-        .force("x", d3.forceX(width / 2).strength(0.2))
-        .force("y", d3.forceY(height / 2).strength(0.2))
-        .force(
-          "collide",
-          d3.forceCollide<BubbleNode>((d) => d.value + 15)
-        )
-        .stop();
-
-      for (let i = 0; i < 200; i++) simulation.tick();
-
-      const bubbles = svg
-        .selectAll(".bubble")
-        .data(bubbleData)
-        .enter()
-        .append("g")
-        .attr("class", "bubble")
-        .attr("transform", (d) => `translate(${d.x || 0},${d.y || 0})`);
-
-      bubbles
-        .append("circle")
-        .attr("r", 0)
-        .attr("fill", (d) => d.color)
-        .attr("opacity", 0.85)
-        .transition()
-        .duration(1000)
-        .delay((_, i) => i * 150)
-        .attr("r", (d) => d.value);
-
-      bubbles
-        .append("text")
-        .attr("text-anchor", "middle")
-        .attr("dy", "-0.3em")
-        .attr("fill", "#fff")
-        .attr("font-size", "10px")
-        .attr("font-weight", "600")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .text((d) => d.name.split(" ")[0])
-        .transition()
-        .delay((_, i) => 1000 + i * 150)
-        .style("opacity", 1);
-
-      bubbles
-        .append("text")
-        .attr("text-anchor", "middle")
-        .attr("dy", "1em")
-        .attr("fill", "#fff")
-        .attr("font-size", "9px")
-        .style("pointer-events", "none")
-        .style("opacity", 0)
-        .text((d) => {
-          const original = damagePathwayData.find((p) => p.pathway === d.name);
-          return original ? formatMillions(original.value) : "";
-        })
-        .transition()
-        .delay((_, i) => 1100 + i * 150)
-        .style("opacity", 0.8);
-    }
-
-    drawChart();
-
-    const handleResize = () => {
-      drawChart();
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isInView]);
-
-  return <div ref={chartRef} className="w-full h-[380px]" />;
-}
 
 export function Health() {
   const ref = useRef(null);
@@ -237,9 +126,12 @@ export function Health() {
                     {d.pathway}
                   </h4>
                   <p className="text-sm text-gray-400">
-                    {d.pathway === "Air Quality Improvement" && "Reducing emissions and pollutants for cleaner, healthier air"}
-                    {d.pathway === "Noise Pollution Reduction" && "Creating quieter environments through low-emission transport"}
-                    {d.pathway === "Active Transport" && "Promoting walking and cycling for better health outcomes"}
+                    {d.pathway === "Air Quality Improvement" &&
+                      "Reducing emissions and pollutants for cleaner, healthier air"}
+                    {d.pathway === "Noise Pollution Reduction" &&
+                      "Creating quieter environments through low-emission transport"}
+                    {d.pathway === "Active Transport" &&
+                      "Promoting walking and cycling for better health outcomes"}
                   </p>
                 </div>
               ))}

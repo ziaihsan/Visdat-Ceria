@@ -112,22 +112,26 @@ function Treemap() {
       }
 
       const leaves = root.leaves() as LeafNode[];
-      
-      // Ensure minimum size for smaller items to make them visible
+
+      // Force 3/5 and 2/5 split for better visibility (horizontal layout)
       if (leaves.length === 2) {
-        const minHeight = height * 0.25; // Minimum 25% of height for visibility
-        leaves.forEach((leaf: any) => {
-          const currentHeight = (leaf.y1 || 0) - (leaf.y0 || 0);
-          if (currentHeight < minHeight) {
-            const diff = minHeight - currentHeight;
-            leaf.y1 = (leaf.y0 || 0) + minHeight;
-            // Adjust the larger item
-            const otherLeaf = leaves.find(l => l !== leaf);
-            if (otherLeaf) {
-              otherLeaf.y0 = (otherLeaf.y0 || 0) + diff;
-            }
-          }
-        });
+        // Sort by value to identify larger and smaller items
+        const sortedLeaves = [...leaves].sort(
+          (a, b) => b.data.value - a.data.value
+        );
+        const largerLeaf = sortedLeaves[0];
+        const smallerLeaf = sortedLeaves[1];
+
+        // Set fixed proportions on WIDTH: 60% for larger (Amenity), 40% for smaller (Society)
+        largerLeaf.x0 = 0;
+        largerLeaf.x1 = width * 0.6; // 3/5 = 60%
+        largerLeaf.y0 = 0;
+        largerLeaf.y1 = height;
+
+        smallerLeaf.x0 = width * 0.6;
+        smallerLeaf.x1 = width; // 2/5 = 40%
+        smallerLeaf.y0 = 0;
+        smallerLeaf.y1 = height;
       }
 
       const cells = svg
@@ -149,10 +153,6 @@ function Treemap() {
         .on("mouseover", function (event: MouseEvent, d: LeafNode) {
           d3.select(this).transition().duration(200).style("opacity", 1);
 
-          const sourcePercentage = d.data.sourceValue 
-            ? ((d.data.value / d.data.sourceValue) * 100).toFixed(1)
-            : "0";
-          
           tooltip.style("visibility", "visible").html(`
           <div>
             <div style="font-weight: 600; margin-bottom: 6px; color: ${
@@ -161,7 +161,9 @@ function Treemap() {
             <div style="font-weight: 700; font-size: 18px; margin-bottom: 4px;">${formatMillions(
               d.data.value
             )}</div>
-            <div style="color: #10b981; font-size: 14px; margin-bottom: 8px;">Source: ${d.data.source || "Economic Benefits"}</div>
+            <div style="color: #10b981; font-size: 14px; margin-bottom: 8px;">Source: ${
+              d.data.source || "Economic Benefits"
+            }</div>
             <div style="color: #9ca3af; font-size: 12px; margin-bottom: 6px;">${
               d.data.description
             }</div>
@@ -471,10 +473,20 @@ export function Economic() {
             By 2050, net-zero policies will generate billions in co-benefits.
           </p>
           <p className="text-base text-gray-400 max-w-3xl mx-auto">
-            Economic benefits encompass the monetary value of improvements to quality of life and societal wellbeing. 
-            <span className="text-emerald-400 font-medium"> Amenity benefits</span> represent the increased property values and environmental comfort from quieter neighborhoods, 
-            while <span className="text-cyan-400 font-medium">society benefits</span> capture broader economic gains including reduced healthcare costs, 
-            improved productivity, and enhanced community wellbeing from cleaner air.
+            Economic benefits encompass the monetary value of improvements to
+            quality of life and societal wellbeing.
+            <span className="text-emerald-400 font-medium">
+              {" "}
+              Amenity benefits
+            </span>{" "}
+            represent the increased property values and environmental comfort
+            from quieter neighborhoods, while{" "}
+            <span className="text-cyan-400 font-medium">
+              society benefits
+            </span>{" "}
+            capture broader economic gains including reduced healthcare costs,
+            improved productivity, and enhanced community wellbeing from cleaner
+            air.
           </p>
         </motion.div>
 

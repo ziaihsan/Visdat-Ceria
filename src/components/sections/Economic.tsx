@@ -124,12 +124,12 @@ function Treemap() {
 
         // Set fixed proportions on WIDTH: 60% for larger (Amenity), 40% for smaller (Society)
         largerLeaf.x0 = 0;
-        largerLeaf.x1 = width * 0.6; // 3/5 = 60%
+        largerLeaf.x1 = width * 0.8; // 3/5
         largerLeaf.y0 = 0;
         largerLeaf.y1 = height;
 
-        smallerLeaf.x0 = width * 0.6;
-        smallerLeaf.x1 = width; // 2/5 = 40%
+        smallerLeaf.x0 = width * 0.8;
+        smallerLeaf.x1 = width; // 2/5
         smallerLeaf.y0 = 0;
         smallerLeaf.y1 = height;
       }

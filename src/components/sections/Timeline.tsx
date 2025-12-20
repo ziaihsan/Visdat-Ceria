@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { GlassCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Pause } from "lucide-react";
-import { timelineData, formatMillions } from "@/data/metrics";
+import { timelineData, formatMillions, growthData } from "@/data/metrics";
 
 const categories = [
   { key: "total", color: "#10b981", label: "Total Benefits" },
@@ -302,6 +302,168 @@ function LineChart({ year }: { year: number }) {
   );
 }
 
+function GrowthChart() {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(chartRef, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (!chartRef.current || !isInView) return;
+
+    const container = chartRef.current;
+    container.innerHTML = "";
+
+    // Responsive margins
+    const isMobile = window.innerWidth < 768;
+    const margin = {
+      top: 20,
+      right: isMobile ? 20 : 40,
+      bottom: isMobile ? 60 : 80,
+      left: isMobile ? 50 : 80,
+    };
+    const containerWidth = container.clientWidth || 300;
+    const width = containerWidth - margin.left - margin.right;
+    const height = (isMobile ? 300 : 400) - margin.top - margin.bottom;
+
+    const svg = d3
+      .select(container)
+      .append("svg")
+      .attr("width", "100%")
+      .attr("height", height + margin.top + margin.bottom)
+      .attr(
+        "viewBox",
+        `0 0 ${width + margin.left + margin.right} ${
+          height + margin.top + margin.bottom
+        }`
+      )
+      .attr("preserveAspectRatio", "xMinYMid meet")
+      .style("max-width", "100%")
+      .style("display", "block")
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // X scale
+    const x = d3
+      .scaleBand()
+      .domain(growthData.map((d) => d.category))
+      .range([0, width])
+      .padding(0.3);
+
+    // Y scale
+    const y = d3
+      .scaleLinear()
+      .domain([0, Math.max(...growthData.map((d) => d.growth)) * 1.1])
+      .range([height, 0]);
+
+    // Grid
+    svg
+      .append("g")
+      .attr("class", "grid")
+      .call(
+        d3
+          .axisLeft(y)
+          .tickSize(-width)
+          .tickFormat(() => "")
+      )
+      .selectAll("line")
+      .attr("stroke", "#333")
+      .attr("stroke-opacity", 0.3);
+
+    svg.selectAll(".grid .domain").remove();
+
+    // Bars with animation
+    svg
+      .selectAll(".bar")
+      .data(growthData)
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => x(d.category)!)
+      .attr("width", x.bandwidth())
+      .attr("y", height)
+      .attr("height", 0)
+      .attr("fill", (d) => d.color)
+      .attr("rx", 4)
+      .style("cursor", "pointer")
+      .on("mouseover", function () {
+        d3.select(this).attr("opacity", 0.8);
+      })
+      .on("mouseout", function () {
+        d3.select(this).attr("opacity", 1);
+      })
+      .transition()
+      .duration(1000)
+      .delay((d, i) => i * 150)
+      .attr("y", (d) => y(d.growth))
+      .attr("height", (d) => height - y(d.growth));
+
+    // Add values on top of bars
+    svg
+      .selectAll(".bar-label")
+      .data(growthData)
+      .enter()
+      .append("text")
+      .attr("class", "bar-label")
+      .attr("x", (d) => x(d.category)! + x.bandwidth() / 2)
+      .attr("y", height)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#fff")
+      .attr("font-size", isMobile ? "14px" : "16px")
+      .attr("font-weight", "700")
+      .text((d) => `£${(d.growth / 1000).toFixed(2)}B`)
+      .style("opacity", 0)
+      .transition()
+      .duration(1000)
+      .delay((d, i) => i * 150 + 800)
+      .attr("y", (d) => y(d.growth) - 10)
+      .style("opacity", 1);
+
+    // X axis
+    svg
+      .append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .attr("color", "#666")
+      .selectAll("text")
+      .attr("font-size", isMobile ? "10px" : "12px")
+      .style("text-anchor", isMobile ? "end" : "middle")
+      .attr("dx", isMobile ? "-.8em" : "0")
+      .attr("dy", isMobile ? ".15em" : ".71em")
+      .attr("transform", isMobile ? "rotate(-45)" : "rotate(0)");
+
+    // Y axis
+    svg
+      .append("g")
+      .call(
+        d3
+          .axisLeft(y)
+          .tickFormat((d) => `£${(d as number / 1000).toFixed(1)}B`)
+          .ticks(6)
+      )
+      .attr("color", "#666");
+
+    // Y axis label
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", isMobile ? -40 : -60)
+      .attr("x", -height / 2)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#666")
+      .attr("font-size", isMobile ? "10px" : "12px")
+      .text("Growth Value (2025-2050)");
+  }, [isInView]);
+
+  return (
+    <div style={{ position: "relative", width: "100%", overflow: "hidden" }}>
+      <div
+        ref={chartRef}
+        className="w-full overflow-hidden"
+        style={{ maxWidth: "100%", margin: "0", padding: "0" }}
+      />
+    </div>
+  );
+}
+
 export function Timeline() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -432,6 +594,43 @@ export function Timeline() {
         </motion.div>
 
         <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="overflow-hidden w-full mt-12"
+        >
+          <GlassCard className="p-3 md:p-8 overflow-hidden">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                Growth by Benefit Type
+              </h3>
+              <p className="text-gray-400">
+                Absolute growth from 2025 to 2050
+              </p>
+            </div>
+            <GrowthChart />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              {growthData.map((item) => (
+                <div
+                  key={item.category}
+                  className="text-center p-4 rounded-xl"
+                  style={{ backgroundColor: `${item.color}15` }}
+                >
+                  <div className="text-3xl mb-2">{item.icon}</div>
+                  <div
+                    className="text-xl md:text-2xl font-bold mb-1"
+                    style={{ color: item.color }}
+                  >
+                    £{(item.growth / 1000).toFixed(2)}B
+                  </div>
+                  <div className="text-xs text-gray-400">{item.category}</div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        <motion.div
           className="grid md:grid-cols-2 gap-6 mt-12"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -452,8 +651,8 @@ export function Timeline() {
               Peak Impact by 2050
             </h3>
             <p className="text-gray-400">
-              By 2050, annual benefits reach £11.4B as air quality, active
-              transport, and noise reduction benefits fully mature.
+              By 2050, annual benefits reach £11.4B—a remarkable 500% growth—as air 
+              quality, active transport, and noise reduction benefits fully mature.
             </p>
           </GlassCard>
         </motion.div>

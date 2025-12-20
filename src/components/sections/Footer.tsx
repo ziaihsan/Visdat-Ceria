@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect } from "react";
 import * as d3 from "d3";
-import { cumulativeData, summaryStats, formatMillions } from "@/data/metrics";
+import { timelineData, summaryStats, formatMillions } from "@/data/metrics";
 
 function FinalChart() {
   const chartRef = useRef<HTMLDivElement>(null);
@@ -24,24 +24,24 @@ function FinalChart() {
 
     const x = d3
       .scaleBand()
-      .domain(cumulativeData.map((d) => d.year.toString()))
+      .domain(timelineData.map((d) => d.year.toString()))
       .range([50, width - 50])
       .padding(0.3);
 
     const maxR = 50;
     const rScale = d3
       .scaleSqrt()
-      .domain([0, d3.max(cumulativeData, (d) => d.cumulative)!])
+      .domain([0, d3.max(timelineData, (d) => d.total)!])
       .range([15, maxR]);
 
     const colorScale = d3
       .scaleLinear<string>()
-      .domain([0, cumulativeData.length - 1])
+      .domain([0, timelineData.length - 1])
       .range(["#334155", "#10b981"]);
 
     const groups = svg
       .selectAll(".group")
-      .data(cumulativeData)
+      .data(timelineData)
       .enter()
       .append("g")
       .attr(
@@ -60,7 +60,7 @@ function FinalChart() {
       .transition()
       .duration(800)
       .delay((_, i) => i * 100)
-      .attr("r", (d) => rScale(d.cumulative));
+      .attr("r", (d) => rScale(d.total));
 
     groups
       .append("text")
@@ -70,7 +70,7 @@ function FinalChart() {
       .attr("font-size", "11px")
       .attr("font-weight", "600")
       .style("opacity", 0)
-      .text((d) => formatMillions(d.cumulative))
+      .text((d) => formatMillions(d.total))
       .transition()
       .delay((_, i) => 800 + i * 100)
       .style("opacity", 1);

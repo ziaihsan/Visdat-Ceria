@@ -91,7 +91,7 @@ function Treemap() {
         .hierarchy<TreemapNode>({ children: economicData as TreemapNode[] })
         .sum((d) => d.value || 0);
 
-      d3.treemap<TreemapNode>().size([width, height]).padding(6).round(true)(
+      d3.treemap<TreemapNode>().size([width, height]).padding(4).round(true)(
         root
       );
 
@@ -106,10 +106,29 @@ function Treemap() {
           color: string;
           description: string;
           detail?: string;
+          source?: string;
+          sourceValue?: number;
         };
       }
 
       const leaves = root.leaves() as LeafNode[];
+      
+      // Ensure minimum size for smaller items to make them visible
+      if (leaves.length === 2) {
+        const minHeight = height * 0.25; // Minimum 25% of height for visibility
+        leaves.forEach((leaf: any) => {
+          const currentHeight = (leaf.y1 || 0) - (leaf.y0 || 0);
+          if (currentHeight < minHeight) {
+            const diff = minHeight - currentHeight;
+            leaf.y1 = (leaf.y0 || 0) + minHeight;
+            // Adjust the larger item
+            const otherLeaf = leaves.find(l => l !== leaf);
+            if (otherLeaf) {
+              otherLeaf.y0 = (otherLeaf.y0 || 0) + diff;
+            }
+          }
+        });
+      }
 
       const cells = svg
         .selectAll(".cell")
@@ -130,10 +149,10 @@ function Treemap() {
         .on("mouseover", function (event: MouseEvent, d: LeafNode) {
           d3.select(this).transition().duration(200).style("opacity", 1);
 
-          const percentage = (
-            (d.data.value / totalPositiveBenefits) *
-            100
-          ).toFixed(1);
+          const sourcePercentage = d.data.sourceValue 
+            ? ((d.data.value / d.data.sourceValue) * 100).toFixed(1)
+            : "0";
+          
           tooltip.style("visibility", "visible").html(`
           <div>
             <div style="font-weight: 600; margin-bottom: 6px; color: ${
@@ -142,7 +161,7 @@ function Treemap() {
             <div style="font-weight: 700; font-size: 18px; margin-bottom: 4px;">${formatMillions(
               d.data.value
             )}</div>
-            <div style="color: #10b981; font-size: 14px; margin-bottom: 8px;">${percentage}% of total</div>
+            <div style="color: #10b981; font-size: 14px; margin-bottom: 8px;">Source: ${d.data.source || "Economic Benefits"}</div>
             <div style="color: #9ca3af; font-size: 12px; margin-bottom: 6px;">${
               d.data.description
             }</div>
@@ -448,8 +467,14 @@ export function Economic() {
             <br />
             <span className="text-gradient">Great for the Economy.</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-6">
             By 2050, net-zero policies will generate billions in co-benefits.
+          </p>
+          <p className="text-base text-gray-400 max-w-3xl mx-auto">
+            Economic benefits encompass the monetary value of improvements to quality of life and societal wellbeing. 
+            <span className="text-emerald-400 font-medium"> Amenity benefits</span> represent the increased property values and environmental comfort from quieter neighborhoods, 
+            while <span className="text-cyan-400 font-medium">society benefits</span> capture broader economic gains including reduced healthcare costs, 
+            improved productivity, and enhanced community wellbeing from cleaner air.
           </p>
         </motion.div>
 
@@ -500,25 +525,6 @@ export function Economic() {
             </GlassCard>
           </motion.div>
         </div>
-
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.8, delay: 0.6 }}
-        >
-          <div className="inline-block rounded-[2rem] bg-gradient-to-r from-emerald-500 to-cyan-500 p-[2px]">
-            <div className="rounded-[calc(2rem-2px)] bg-black px-16 py-10">
-              <p className="text-gray-400 text-sm mb-2">
-                Total Economic Benefits
-              </p>
-              <div className="text-5xl md:text-7xl font-bold text-gradient">
-                {formatMillions(totalPositiveBenefits)}
-              </div>
-              <p className="text-gray-500 mt-2">by 2050</p>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

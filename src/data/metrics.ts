@@ -234,57 +234,79 @@ export const yearlyBenefitsData = {
 export const timelineData = [
   {
     year: 2025,
-    physicalActivity: 1609.18,
-    airQuality: 172.41,
-    noise: 117.01,
-    total: 1898.6,
+    physicalActivity: 1610,
+    airQuality: 170,
+    noise: 120,
+    total: 1900,
     description:
       "Program Launch: Initial green space development and cycle lane construction begins",
   },
   {
     year: 2030,
-    physicalActivity: 4085.08,
-    airQuality: 577.17,
-    noise: 551.42,
-    total: 5213.67,
+    physicalActivity: 4090,
+    airQuality: 580,
+    noise: 551,
+    total: 5221,
     description:
       "Early Growth: Significant increase as infrastructure becomes established",
   },
   {
     year: 2035,
-    physicalActivity: 4940.14,
-    airQuality: 1521.34,
-    noise: 1492.89,
-    total: 7954.37,
+    physicalActivity: 4940,
+    airQuality: 1520,
+    noise: 1490,
+    total: 7950,
     description:
       "Maturation Phase: Full utilization of green spaces and active transport",
   },
   {
     year: 2040,
-    physicalActivity: 5649.21,
-    airQuality: 2494.13,
-    noise: 1803.98,
-    total: 9947.32,
+    physicalActivity: 5650,
+    airQuality: 2490,
+    noise: 1810,
+    total: 9950,
     description:
       "Peak Benefits: Maximum health and environmental impacts realized",
   },
   {
     year: 2045,
-    physicalActivity: 6203.15,
-    airQuality: 3090.07,
-    noise: 1823.19,
-    total: 11116.41,
+    physicalActivity: 6200,
+    airQuality: 3090,
+    noise: 1830,
+    total: 11120,
     description:
       "Sustained Impact: Long-term health benefits firmly established",
   },
   {
     year: 2050,
-    physicalActivity: 6605.74,
-    airQuality: 3082.33,
-    noise: 1708.98,
-    total: 11397.05,
+    physicalActivity: 6610,
+    airQuality: 3080,
+    noise: 1710,
+    total: 11400,
     description:
       "Program Culmination: Comprehensive transformation of urban environments complete",
+  },
+];
+
+// Growth values for each category (2025 to 2050) in millions GBP
+export const growthData = [
+  {
+    category: "Physical Activity",
+    growth: 5000,
+    color: "#3b82f6",
+    icon: "🚴",
+  },
+  {
+    category: "Air Quality",
+    growth: 2910,
+    color: "#8b5cf6",
+    icon: "🌬️",
+  },
+  {
+    category: "Noise",
+    growth: 1590,
+    color: "#f59e0b",
+    icon: "🔇",
   },
 ];
 
@@ -329,27 +351,23 @@ export const healthOutcomes = [
 // Economic breakdown - Top 3 Benefits Only
 export const economicData = [
   {
-    name: "Physical Activity",
-    value: 129879.19,
-    description: "Health benefits from increased walking and cycling",
-    color: "#10b981",
-    detail:
-      "Includes cardiovascular improvements, obesity reduction, and mental health benefits",
-  },
-  {
-    name: "Air Quality",
-    value: 48259.41,
-    description: "Reduced mortality and health costs from cleaner air",
-    color: "#3b82f6",
-    detail: "Decreases PM2.5 and NO2 levels, reduces respiratory diseases",
-  },
-  {
-    name: "Noise Reduction",
-    value: 34207.75,
-    description: "Amenity and sleep benefits from quieter environments",
+    name: "Amenity",
+    value: 20100,
+    description: "Environmental comfort & property value",
     color: "#8b5cf6",
+    source: "Noise Pollution Reduction",
+    sourceValue: 14140.31,
     detail:
-      "Improves sleep quality, reduces stress, enhances urban living quality",
+      "Increased property values and quality of life from quieter, more pleasant neighborhoods due to reduced traffic noise and emissions",
+  },
+  {
+    name: "Society",
+    value: 600,
+    description: "Broader societal economic gains",
+    color: "#3b82f6",
+    source: "Air Quality Improvement",
+    sourceValue: 181077.24,
+    detail: "Reduced healthcare costs, improved worker productivity, decreased sick days, and enhanced community wellbeing from cleaner air and healthier populations",
   },
 ];
 

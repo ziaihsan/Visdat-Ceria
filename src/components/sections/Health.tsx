@@ -212,20 +212,35 @@ export function Health() {
         >
           <GlassCard className="p-8">
             <h3 className="text-xl font-semibold text-white mb-6 text-center">
-              Damage Pathway Distribution
+              Pathways to Achieve Benefits
             </h3>
-            <BubbleChart />
-            <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <div className="grid md:grid-cols-3 gap-6 mt-8">
               {damagePathwayData.map((d) => (
                 <div
                   key={d.pathway}
-                  className="flex items-center gap-2 text-sm"
+                  className="text-center p-6 rounded-xl transition-all hover:scale-105"
+                  style={{ backgroundColor: `${d.color}15` }}
                 >
                   <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: d.color }}
-                  />
-                  <span className="text-gray-400">{d.pathway}</span>
+                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: `${d.color}30` }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{ backgroundColor: d.color }}
+                    />
+                  </div>
+                  <h4
+                    className="text-lg font-semibold mb-2"
+                    style={{ color: d.color }}
+                  >
+                    {d.pathway}
+                  </h4>
+                  <p className="text-sm text-gray-400">
+                    {d.pathway === "Air Quality Improvement" && "Reducing emissions and pollutants for cleaner, healthier air"}
+                    {d.pathway === "Noise Pollution Reduction" && "Creating quieter environments through low-emission transport"}
+                    {d.pathway === "Active Transport" && "Promoting walking and cycling for better health outcomes"}
+                  </p>
                 </div>
               ))}
             </div>
